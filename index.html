@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fraction Division Challenge</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 10px;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      color: #333;
+    }
+    .choices {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+    .choice {
+      padding: 10px 20px;
+      border: 2px solid #333;
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 20px;
+      background-color: #fff;
+      transition: background-color 0.3s;
+    }
+    .choice:hover {
+      background-color: #e0e0e0;
+    }
+    .correct {
+      background-color: lightgreen !important;
+    }
+    .incorrect {
+      background-color: lightcoral !important;
+    }
+    #question {
+      font-size: 24px;
+      margin: 20px;
+    }
+    .fraction {
+      display: inline-block;
+      text-align: center;
+      vertical-align: middle;
+      margin: 0 2px;
+    }
+    .fraction .top {
+      display: block;
+      border-bottom: 1px solid #000;
+      padding: 0 2px;
+    }
+    .fraction .bottom {
+      display: block;
+      padding: 0 2px;
+    }
+    #feedback {
+      font-size: 20px;
+      margin: 20px;
+    }
+    #starCounter {
+      display: inline-block;
+      margin-right: 20px;
+    }
+    #message {
+      display: inline-block;
+      height: 24px;
+    }
+    #hintBtn {
+      padding: 8px 16px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    #hintText {
+      font-size: 18px;
+      margin-top: 10px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>Fraction Division Challenge</h1>
+  <div id="question"></div>
+  <button id="hintBtn">Show Hint</button>
+  <div id="hintText" style="display:none;"></div>
+  <div class="choices" id="choices"></div>
+  <div id="feedback">
+    <span id="starCounter">⭐ 0</span>
+    <span id="message"></span>
+  </div>
+  
+  <script>
+    var starCount = 0;
+    function updateStarCounter() {
+      document.getElementById("starCounter").innerHTML = "⭐ " + starCount;
+    }
+    
+    // Render a fraction (vinculum style)
+    function renderFraction(numerator, denominator) {
+      return '<span class="fraction"><span class="top">' + numerator + '</span><span class="bottom">' + denominator + '</span></span>';
+    }
+    
+    // Compute the greatest common divisor
+    function gcd(a, b) {
+      if (b === 0) return a;
+      return gcd(b, a % b);
+    }
+    
+    // Simplify a fraction and return [numerator, denominator]
+    function simplifyFraction(num, den) {
+      var divisor = gcd(num, den);
+      return [num / divisor, den / divisor];
+    }
+    
+    // Format a fraction as a string, or as an integer if denominator is 1
+    function formatFraction(num, den) {
+      if (den === 1) return num.toString();
+      return num + "/" + den;
+    }
+    
+    // Shuffle an array (Fisher-Yates shuffle)
+    function shuffleArray(array) {
+      for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+      }
+    }
+    
+    // Generate a new fraction division question
+    function generateQuestion() {
+      document.getElementById("message").innerHTML = "";
+      document.getElementById("hintText").style.display = "none";
+      
+      // Denominators list for generating fractions
+      var denominators = [2, 3, 4, 5, 6, 8, 10];
+      
+      // Randomly choose operators for numerator and denominator expressions
+      var ops = ["+", "-"];
+      var op1 = ops[Math.floor(Math.random() * ops.length)];
+      var op2 = ops[Math.floor(Math.random() * ops.length)];
+      
+      // Generate numerator expression fractions (with common denominator)
+      var d1 = denominators[Math.floor(Math.random() * denominators.length)];
+      var a, b;
+      if (op1 === "+") {
+        a = Math.floor(Math.random() * d1 * 2) + 1;
+        b = Math.floor(Math.random() * d1 * 2) + 1;
+      } else {
+        a = Math.floor(Math.random() * d1 * 2) + 2;
+        b = Math.floor(Math.random() * (a - 1)) + 1;
+      }
+      
+      // Generate denominator expression fractions (with common denominator)
+      var d2 = denominators[Math.floor(Math.random() * denominators.length)];
+      var c, d;
+      if (op2 === "+") {
+        c = Math.floor(Math.random() * d2 * 2) + 1;
+        d = Math.floor(Math.random() * d2 * 2) + 1;
+      } else {
+        c = Math.floor(Math.random() * d2 * 2) + 2;
+        d = Math.floor(Math.random() * (c - 1)) + 1;
+      }
+      
+      // Compute the values of the expressions
+      var numValue = (op1 === "+") ? (a + b) : (a - b);
+      var denValue = (op2 === "+") ? (c + d) : (c - d);
+      
+      // Calculate the division of the two fractions:
+      // (numValue/d1) ÷ (denValue/d2) = (numValue * d2) / (d1 * denValue)
+      var resultNum = numValue * d2;
+      var resultDen = d1 * denValue;
+      
+      // Simplify the result
+      var simplified = simplifyFraction(resultNum, resultDen);
+      var correctAnswer = formatFraction(simplified[0], simplified[1]);
+      
+      // Render the question text
+      var questionText = "Solve: ( " + renderFraction(a, d1) + " " + op1 + " " + renderFraction(b, d1) + " ) ÷ ( " + renderFraction(c, d2) + " " + op2 + " " + renderFraction(d, d2) + " )";
+      document.getElementById("question").innerHTML = questionText;
+      
+      // Generate answer choices (one correct answer and three distractors)
+      var choices = [];
+      choices.push(correctAnswer);
+      
+      // Distractor 1: Reciprocal of the correct answer (if not equal)
+      var reciprocal = "";
+      if (simplified[0] !== 0) {
+        var recip = simplifyFraction(simplified[1], simplified[0]);
+        reciprocal = formatFraction(recip[0], recip[1]);
+      }
+      if (reciprocal && reciprocal !== correctAnswer) {
+        choices.push(reciprocal);
+      } else {
+        // If reciprocal is same as correct or zero, modify slightly
+        var alt1 = simplifyFraction(resultNum + 1, resultDen);
+        choices.push(formatFraction(alt1[0], alt1[1]));
+      }
+      
+      // Distractor 2: Increase numerator by 1
+      var alt2 = simplifyFraction(resultNum + 1, resultDen);
+      var alt2Str = formatFraction(alt2[0], alt2[1]);
+      if (alt2Str !== correctAnswer) {
+        choices.push(alt2Str);
+      } else {
+        choices.push(formatFraction(resultNum, resultDen + 1));
+      }
+      
+      // Distractor 3: Increase denominator by 1
+      var alt3 = simplifyFraction(resultNum, resultDen + 1);
+      var alt3Str = formatFraction(alt3[0], alt3[1]);
+      if (alt3Str !== correctAnswer && choices.indexOf(alt3Str) === -1) {
+        choices.push(alt3Str);
+      } else {
+        choices.push(formatFraction(resultNum + 2, resultDen));
+      }
+      
+      // Ensure we have exactly 4 choices
+      while (choices.length < 4) {
+        choices.push(correctAnswer);
+      }
+      
+      shuffleArray(choices);
+      
+      // Render choices as clickable buttons
+      var choicesDiv = document.getElementById("choices");
+      choicesDiv.innerHTML = "";
+      for (var i = 0; i < choices.length; i++) {
+        var btn = document.createElement("div");
+        btn.className = "choice";
+        btn.innerHTML = choices[i];
+        btn.onclick = (function(selected, correct) {
+          return function() {
+            if (selected === correct) {
+              this.classList.add("correct");
+              document.getElementById("message").innerHTML = "Correct! 🎉";
+              starCount++;
+              updateStarCounter();
+              setTimeout(generateQuestion, 1000);
+            } else {
+              this.classList.add("incorrect");
+              document.getElementById("message").innerHTML = "Incorrect! ❌";
+              starCount = Math.max(0, starCount - 1);
+              updateStarCounter();
+            }
+          };
+        })(choices[i], correctAnswer);
+        choicesDiv.appendChild(btn);
+      }
+    }
+    
+    // Toggle hint display when the button is clicked
+    document.getElementById("hintBtn").addEventListener("click", function() {
+      var hintDiv = document.getElementById("hintText");
+      if (hintDiv.style.display === "none") {
+        hintDiv.style.display = "block";
+        hintDiv.innerHTML = "Hint: To divide fractions, multiply the first fraction by the reciprocal of the second.<br>Example: (a/b) ÷ (c/d) = (a*d) / (b*c).<br>Then complete the addition/subtraction in each part first.";
+      } else {
+        hintDiv.style.display = "none";
+      }
+    });
+    
+    window.onload = function() {
+      updateStarCounter();
+      generateQuestion();
+    };
+  </script>
+</body>
+</html>
