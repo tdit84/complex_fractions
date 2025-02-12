@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fraction Division Challenge</title>
+  <title>Complex Fraction Game</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -43,6 +43,7 @@
     #question {
       font-size: 24px;
       margin: 20px;
+      min-height: 80px;
     }
     .fraction {
       display: inline-block;
@@ -54,10 +55,26 @@
       display: block;
       border-bottom: 1px solid #000;
       padding: 0 2px;
+      font-size: 18px;
     }
     .fraction .bottom {
       display: block;
       padding: 0 2px;
+      font-size: 18px;
+    }
+    .complex-fraction {
+      display: inline-block;
+      text-align: center;
+      margin: 20px;
+    }
+    .complex-fraction .top {
+      border-bottom: 2px solid #000;
+      padding: 5px 10px;
+      font-size: 24px;
+    }
+    .complex-fraction .bottom {
+      padding: 5px 10px;
+      font-size: 24px;
     }
     #feedback {
       font-size: 20px;
@@ -81,14 +98,15 @@
       font-size: 18px;
       margin-top: 10px;
       color: #555;
+      display: none;
     }
   </style>
 </head>
 <body>
-  <h1>Fraction Division Challenge</h1>
+  <h1>Complex Fraction Game</h1>
   <div id="question"></div>
   <button id="hintBtn">Show Hint</button>
-  <div id="hintText" style="display:none;"></div>
+  <div id="hintText"></div>
   <div class="choices" id="choices"></div>
   <div id="feedback">
     <span id="starCounter">⭐ 0</span>
@@ -97,13 +115,24 @@
   
   <script>
     var starCount = 0;
+    
     function updateStarCounter() {
       document.getElementById("starCounter").innerHTML = "⭐ " + starCount;
     }
     
-    // Render a fraction (vinculum style)
+    // Render a simple fraction in vinculum style
     function renderFraction(numerator, denominator) {
       return '<span class="fraction"><span class="top">' + numerator + '</span><span class="bottom">' + denominator + '</span></span>';
+    }
+    
+    // Render a complex (stacked) fraction with a numerator and a denominator
+    function renderComplexFraction(numeratorContent, denominatorContent) {
+      return '<div class="complex-fraction"><div class="top">' + numeratorContent + '</div><div class="bottom">' + denominatorContent + '</div></div>';
+    }
+    
+    // Concatenate two parts with an operator (used in hard mode)
+    function renderExpression(frac1, op, frac2) {
+      return frac1 + " " + op + " " + frac2;
     }
     
     // Compute the greatest common divisor
@@ -118,7 +147,7 @@
       return [num / divisor, den / divisor];
     }
     
-    // Format a fraction as a string, or as an integer if denominator is 1
+    // Format a fraction as a string (or an integer if denominator is 1)
     function formatFraction(num, den) {
       if (den === 1) return num.toString();
       return num + "/" + den;
@@ -134,102 +163,8 @@
       }
     }
     
-    // Generate a new fraction division question
-    function generateQuestion() {
-      document.getElementById("message").innerHTML = "";
-      document.getElementById("hintText").style.display = "none";
-      
-      // Denominators list for generating fractions
-      var denominators = [2, 3, 4, 5, 6, 8, 10];
-      
-      // Randomly choose operators for numerator and denominator expressions
-      var ops = ["+", "-"];
-      var op1 = ops[Math.floor(Math.random() * ops.length)];
-      var op2 = ops[Math.floor(Math.random() * ops.length)];
-      
-      // Generate numerator expression fractions (with common denominator)
-      var d1 = denominators[Math.floor(Math.random() * denominators.length)];
-      var a, b;
-      if (op1 === "+") {
-        a = Math.floor(Math.random() * d1 * 2) + 1;
-        b = Math.floor(Math.random() * d1 * 2) + 1;
-      } else {
-        a = Math.floor(Math.random() * d1 * 2) + 2;
-        b = Math.floor(Math.random() * (a - 1)) + 1;
-      }
-      
-      // Generate denominator expression fractions (with common denominator)
-      var d2 = denominators[Math.floor(Math.random() * denominators.length)];
-      var c, d;
-      if (op2 === "+") {
-        c = Math.floor(Math.random() * d2 * 2) + 1;
-        d = Math.floor(Math.random() * d2 * 2) + 1;
-      } else {
-        c = Math.floor(Math.random() * d2 * 2) + 2;
-        d = Math.floor(Math.random() * (c - 1)) + 1;
-      }
-      
-      // Compute the values of the expressions
-      var numValue = (op1 === "+") ? (a + b) : (a - b);
-      var denValue = (op2 === "+") ? (c + d) : (c - d);
-      
-      // Calculate the division of the two fractions:
-      // (numValue/d1) ÷ (denValue/d2) = (numValue * d2) / (d1 * denValue)
-      var resultNum = numValue * d2;
-      var resultDen = d1 * denValue;
-      
-      // Simplify the result
-      var simplified = simplifyFraction(resultNum, resultDen);
-      var correctAnswer = formatFraction(simplified[0], simplified[1]);
-      
-      // Render the question text
-      var questionText = "Solve: ( " + renderFraction(a, d1) + " " + op1 + " " + renderFraction(b, d1) + " ) ÷ ( " + renderFraction(c, d2) + " " + op2 + " " + renderFraction(d, d2) + " )";
-      document.getElementById("question").innerHTML = questionText;
-      
-      // Generate answer choices (one correct answer and three distractors)
-      var choices = [];
-      choices.push(correctAnswer);
-      
-      // Distractor 1: Reciprocal of the correct answer (if not equal)
-      var reciprocal = "";
-      if (simplified[0] !== 0) {
-        var recip = simplifyFraction(simplified[1], simplified[0]);
-        reciprocal = formatFraction(recip[0], recip[1]);
-      }
-      if (reciprocal && reciprocal !== correctAnswer) {
-        choices.push(reciprocal);
-      } else {
-        // If reciprocal is same as correct or zero, modify slightly
-        var alt1 = simplifyFraction(resultNum + 1, resultDen);
-        choices.push(formatFraction(alt1[0], alt1[1]));
-      }
-      
-      // Distractor 2: Increase numerator by 1
-      var alt2 = simplifyFraction(resultNum + 1, resultDen);
-      var alt2Str = formatFraction(alt2[0], alt2[1]);
-      if (alt2Str !== correctAnswer) {
-        choices.push(alt2Str);
-      } else {
-        choices.push(formatFraction(resultNum, resultDen + 1));
-      }
-      
-      // Distractor 3: Increase denominator by 1
-      var alt3 = simplifyFraction(resultNum, resultDen + 1);
-      var alt3Str = formatFraction(alt3[0], alt3[1]);
-      if (alt3Str !== correctAnswer && choices.indexOf(alt3Str) === -1) {
-        choices.push(alt3Str);
-      } else {
-        choices.push(formatFraction(resultNum + 2, resultDen));
-      }
-      
-      // Ensure we have exactly 4 choices
-      while (choices.length < 4) {
-        choices.push(correctAnswer);
-      }
-      
-      shuffleArray(choices);
-      
-      // Render choices as clickable buttons
+    // Render answer choices on the page
+    function renderChoices(choices, correctAnswer) {
       var choicesDiv = document.getElementById("choices");
       choicesDiv.innerHTML = "";
       for (var i = 0; i < choices.length; i++) {
@@ -256,12 +191,173 @@
       }
     }
     
-    // Toggle hint display when the button is clicked
+    // Generate an easy complex fraction: (a/b) over (c/d)
+    function generateEasyQuestion() {
+      var denominators = [2, 3, 4, 5, 6, 8, 10];
+      var d1 = denominators[Math.floor(Math.random() * denominators.length)];
+      var d2 = denominators[Math.floor(Math.random() * denominators.length)];
+      var a = Math.floor(Math.random() * (d1 * 2)) + 1;
+      var c = Math.floor(Math.random() * (d2 * 2)) + 1;
+      
+      // Display the problem in stacked (complex fraction) format
+      var questionDisplay = renderComplexFraction(renderFraction(a, d1), renderFraction(c, d2));
+      document.getElementById("question").innerHTML = questionDisplay;
+      
+      // Compute: (a/d1) ÷ (c/d2) = (a*d2)/(d1*c)
+      var resultNum = a * d2;
+      var resultDen = d1 * c;
+      var simplified = simplifyFraction(resultNum, resultDen);
+      var correctAnswer = formatFraction(simplified[0], simplified[1]);
+      
+      // Generate answer choices
+      var choices = [];
+      choices.push(correctAnswer);
+      
+      // Distractor 1: Reciprocal (if valid)
+      var reciprocal = "";
+      if (simplified[0] !== 0) {
+        var recip = simplifyFraction(simplified[1], simplified[0]);
+        reciprocal = formatFraction(recip[0], recip[1]);
+      }
+      if (reciprocal && reciprocal !== correctAnswer) {
+        choices.push(reciprocal);
+      } else {
+        var alt1 = simplifyFraction(resultNum + 1, resultDen);
+        choices.push(formatFraction(alt1[0], alt1[1]));
+      }
+      
+      // Distractor 2: Increase numerator by 1
+      var alt2 = simplifyFraction(resultNum + 1, resultDen);
+      var alt2Str = formatFraction(alt2[0], alt2[1]);
+      if (alt2Str !== correctAnswer) {
+          choices.push(alt2Str);
+      } else {
+          choices.push(formatFraction(resultNum, resultDen + 1));
+      }
+      
+      // Distractor 3: Increase denominator by 1
+      var alt3 = simplifyFraction(resultNum, resultDen + 1);
+      var alt3Str = formatFraction(alt3[0], alt3[1]);
+      if (alt3Str !== correctAnswer && choices.indexOf(alt3Str) === -1) {
+          choices.push(alt3Str);
+      } else {
+          choices.push(formatFraction(resultNum + 2, resultDen));
+      }
+      
+      while (choices.length < 4) {
+        choices.push(correctAnswer);
+      }
+      shuffleArray(choices);
+      renderChoices(choices, correctAnswer);
+    }
+    
+    // Generate a hard complex fraction where numerator and denominator involve addition or subtraction
+    function generateHardQuestion() {
+      var denominators = [2, 3, 4, 5, 6, 8, 10];
+      var ops = ["+", "-"];
+      var op1 = ops[Math.floor(Math.random() * ops.length)];
+      var op2 = ops[Math.floor(Math.random() * ops.length)];
+      
+      // For the numerator expression (both fractions share the same denominator)
+      var d1 = denominators[Math.floor(Math.random() * denominators.length)];
+      var a, b;
+      if (op1 === "+") {
+        a = Math.floor(Math.random() * d1 * 2) + 1;
+        b = Math.floor(Math.random() * d1 * 2) + 1;
+      } else {
+        a = Math.floor(Math.random() * d1 * 2) + 2;
+        b = Math.floor(Math.random() * (a - 1)) + 1;
+      }
+      
+      // For the denominator expression (both fractions share the same denominator)
+      var d2 = denominators[Math.floor(Math.random() * denominators.length)];
+      var c, d;
+      if (op2 === "+") {
+        c = Math.floor(Math.random() * d2 * 2) + 1;
+        d = Math.floor(Math.random() * d2 * 2) + 1;
+      } else {
+        c = Math.floor(Math.random() * d2 * 2) + 2;
+        d = Math.floor(Math.random() * (c - 1)) + 1;
+      }
+      
+      // Display the problem in stacked format:
+      // Top: (a/d1 op1 b/d1) ; Bottom: (c/d2 op2 d/d2)
+      var topDisplay = renderExpression(renderFraction(a, d1), op1, renderFraction(b, d1));
+      var bottomDisplay = renderExpression(renderFraction(c, d2), op2, renderFraction(d, d2));
+      var questionDisplay = renderComplexFraction(topDisplay, bottomDisplay);
+      document.getElementById("question").innerHTML = questionDisplay;
+      
+      // Compute the values:
+      // Numerator: (if op1 is "+", then a+b, else a-b) over d1
+      // Denominator: (if op2 is "+", then c+d, else c-d) over d2
+      var numValue = (op1 === "+") ? (a + b) : (a - b);
+      var denValue = (op2 === "+") ? (c + d) : (c - d);
+      
+      // Division: (numValue/d1) ÷ (denValue/d2) = (numValue * d2) / (d1 * denValue)
+      var resultNum = numValue * d2;
+      var resultDen = d1 * denValue;
+      var simplified = simplifyFraction(resultNum, resultDen);
+      var correctAnswer = formatFraction(simplified[0], simplified[1]);
+      
+      // Generate answer choices
+      var choices = [];
+      choices.push(correctAnswer);
+      
+      // Distractor 1: Reciprocal (if valid)
+      var reciprocal = "";
+      if (simplified[0] !== 0) {
+        var recip = simplifyFraction(simplified[1], simplified[0]);
+        reciprocal = formatFraction(recip[0], recip[1]);
+      }
+      if (reciprocal && reciprocal !== correctAnswer) {
+        choices.push(reciprocal);
+      } else {
+        var alt1 = simplifyFraction(resultNum + 1, resultDen);
+        choices.push(formatFraction(alt1[0], alt1[1]));
+      }
+      
+      // Distractor 2: Increase numerator by 1
+      var alt2 = simplifyFraction(resultNum + 1, resultDen);
+      var alt2Str = formatFraction(alt2[0], alt2[1]);
+      if (alt2Str !== correctAnswer) {
+          choices.push(alt2Str);
+      } else {
+          choices.push(formatFraction(resultNum, resultDen + 1));
+      }
+      
+      // Distractor 3: Increase denominator by 1
+      var alt3 = simplifyFraction(resultNum, resultDen + 1);
+      var alt3Str = formatFraction(alt3[0], alt3[1]);
+      if (alt3Str !== correctAnswer && choices.indexOf(alt3Str) === -1) {
+          choices.push(alt3Str);
+      } else {
+          choices.push(formatFraction(resultNum + 2, resultDen));
+      }
+      
+      while (choices.length < 4) {
+        choices.push(correctAnswer);
+      }
+      shuffleArray(choices);
+      renderChoices(choices, correctAnswer);
+    }
+    
+    // Main function: choose easy mode until 3 stars, then hard mode.
+    function generateQuestion() {
+      document.getElementById("message").innerHTML = "";
+      document.getElementById("hintText").style.display = "none";
+      if (starCount < 3) {
+        generateEasyQuestion();
+      } else {
+        generateHardQuestion();
+      }
+    }
+    
+    // Toggle hint display when button is clicked
     document.getElementById("hintBtn").addEventListener("click", function() {
       var hintDiv = document.getElementById("hintText");
-      if (hintDiv.style.display === "none") {
+      if (hintDiv.style.display === "none" || hintDiv.style.display === "") {
         hintDiv.style.display = "block";
-        hintDiv.innerHTML = "Hint: To divide fractions, multiply the first fraction by the reciprocal of the second.<br>Example: (a/b) ÷ (c/d) = (a*d) / (b*c).<br>Then complete the addition/subtraction in each part first.";
+        hintDiv.innerHTML = "Hint: To divide fractions, multiply the top fraction by the reciprocal of the bottom fraction. In hard mode, complete the addition/subtraction in the numerator and denominator first.";
       } else {
         hintDiv.style.display = "none";
       }
